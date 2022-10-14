@@ -17,6 +17,12 @@ Unravel is an R package / Addin designed to help data scientists understand and 
 devtools::install_github('nischalshrestha/Unravel')
 ```
 
+# Development
+
+```r
+devtools::install()
+```
+
 # Usage
 
 With Unravel, you can unravel `dplyr` or `tidyr` code which opens up a Shiny app in RStudio. You can then click on the lines to **inspect the intermediate outputs** (typically dataframes) of the tidyverse code. Both the code and output will be highlighted according to what type of **changes occurred** (no change, visible change, internal change, error).
