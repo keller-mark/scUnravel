@@ -319,9 +319,11 @@ get_output_intermediates <- function(pipeline) {
   if (!is.null(err)) {
     return(err)
   }
-
+  # NOTE(mark): iterate over the lines of fluent code
   results <- list()
+  output_results <- list()
   for (i in seq_len(length(lines))) {
+    log_info(paste("Iterating over lines. At line", as.character(i)))
     if (i != 1) {
       verb <- lines[[i]][[3]]
       verb_name <- rlang::expr_deparse(verb[[1]])
@@ -341,6 +343,7 @@ get_output_intermediates <- function(pipeline) {
     deparsed <- ifelse(i != 1, style_long_line(verb), deparsed)
     # setup the intermediate list with initial information
     intermediate <- list(line = i, code = deparsed, change = get_change_type(verb_name))
+    output_intermediate <- list(output = NULL)
     err <- NULL
     tryCatch({
         # store the intermediate output, and set the change type based on difference
@@ -348,20 +351,28 @@ get_output_intermediates <- function(pipeline) {
         change_type <- "none"
         data_changed <- FALSE
         if (i == 1) {
-          intermediate["output"] <- list(eval(lines[[i]]))
+          output_intermediate["output"] <- list(eval(lines[[i]]))
+          intermediate["output"] <- list(list(1))
           data_changed <- TRUE
         } else if (i > 1) {
           # check if the previous line had an error, and skip evaluation if it does
           if (identical(results[[i - 1]]$change, "error")) {
             intermediate["output"] <- NULL
+            output_intermediate["output"] <- NULL
             intermediate["change"] <- "error"
             # for now, simply point out that the previous lines have an error
             intermediate["summary"] <- "<strong>Summary:</strong> Previous lines have problems!"
             intermediate["fns_help"] <- gather_fns_help(list(), deparsed)
             results <- append(results, list(intermediate))
+            output_results <- append(output_results, list(output_intermediate))
             next
           }
-          prev_output <- results[[i - 1]]["output"][[1]]
+          prev_output <- output_results[[i - 1]]["output"][[1]]
+          log_info(paste("verb_name", verb_name))
+          log_info(paste("verb", verb))
+          log_info(paste("deparsed", deparsed))
+          log_info(paste("prev_output", class(prev_output))) 
+          #log_info(paste("prev_output_real", output_results[[i - 1]]["output"][[1]]))
           # for the current line, take the previous output and feed it as the `.data`, and the rest of the args
           # NOTE: because we are not evaluating a `lhs %>% rhs()`, and only `rhs()` we miss out on the '.' pronoun
           # so this is a little hack that binds a name "." to the previous output in a new environment
@@ -375,14 +386,20 @@ get_output_intermediates <- function(pipeline) {
             cur_output <- eval(parse(text = call_expr_text), envir = e)
           } else {
             # construct a call for the function such that we use the previous output as the input, and rest of the args
+            log_info(paste("call_expr", "pre"))
             call_expr <- rlang::call2(verb_name, !!!append(list(prev_output), rlang::call_args(verb)))
+            log_info(paste("call_expr", call_expr))
             # evaluate the final function call expression within the new environment that holds the "pronoun"
             cur_output <- eval(call_expr, envir = e)
+            #log_info(paste("cur_output", cur_output))
           }
           # wrap output as list so it can be stored properly
-          intermediate["output"] <- list(cur_output)
-          change_type <- get_data_change_type(verb_name, prev_output, cur_output)
-          data_changed <- !identical(prev_output, cur_output)
+          output_intermediate["output"] <- list(cur_output)
+          intermediate["output"] <- list(list(1))
+          change_type <- "none"
+          #change_type <- get_data_change_type(verb_name, prev_output, cur_output)
+          data_changed <- FALSE
+          #data_changed <- !identical(prev_output, cur_output)
         }
 
         out <- intermediate["output"][[1]]
@@ -476,11 +493,13 @@ get_output_intermediates <- function(pipeline) {
       msg <- gsub("\n\u2139", "<br><span style='color:DodgerBlue'>\u2139</span>", msg)
       msg <- gsub("\n\\*", "<br>*", msg)
       intermediate[["err"]] <- msg
+      log_info(msg)
       # even though we have an error, include function hyperlinks so user can
       # invesitage how the functions within the expression of the line work
       intermediate["fns_help"] <- gather_fns_help(list(), deparsed)
     }
     results <- append(results, list(intermediate))
+    output_results <- append(output_results, list(output_intermediate))
   }
 
   return(results)

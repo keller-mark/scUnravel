@@ -1,0 +1,19 @@
+---
+title: "Seurat tests"
+output: rmarkdown::html_vignette
+---
+
+
+```r
+library(Unravel)
+library(Seurat)
+
+pbmc_small <- SeuratObject::pbmc_small
+
+pbmc_small = UpdateSeuratObject(object = pbmc_small)
+
+all.genes <- rownames(pbmc_small)
+pbmc_small %>%
+  ScaleData(features = all.genes, do.center = FALSE) %>%
+  Unravel::unravel()
+```

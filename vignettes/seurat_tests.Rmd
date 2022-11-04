@@ -13,6 +13,8 @@ SeuratData::InstallData("pbmc3k")
 data("pbmc3k.final")
 force(pbmc3k.final)
 
+pbmc3k.final = UpdateSeuratObject(object = pbmc3k.final)
+
 all.genes <- rownames(pbmc3k.final)
 pbmc3k.final %>%
   ScaleData(features = all.genes, do.center = FALSE) %>%

@@ -142,7 +142,7 @@ log_content_change <- function(content, path = "", context = "rstudio") {
   log_unravel("CONTENT_CHANGE", content, path, context)
 }
 
-log_unravel <- function(type, message, path = "", context = "unravel", storage = "sqlite") {
+log_unravel <- function(type, message, path = "", context = "unravel", storage = "file") {
   # first, check if all the required options are set, and if not quit early
   unravel_log_options <- c("db.file", "unravel.logdir", "unravel.logfile", "unravel.logging")
   are_options_set <- all(unravel_log_options %in% names(options()))

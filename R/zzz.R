@@ -5,6 +5,10 @@
   options(
     "tidylog.display" = list(store_verb_summary),
     "tidylog.callouts" = store_line_callouts,
-    "tidylog.fns_help" = store_fns_help
+    "tidylog.fns_help" = store_fns_help,
+    "db.file" = "logs.sqlite",
+    "unravel.logdir" = "/Users/mkeller/courses/COMPSCI279R/unravel/Unravel/logs/",
+    "unravel.logfile" = "logs.txt",
+    "unravel.logging" = TRUE
   )
 }
