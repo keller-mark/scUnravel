@@ -492,6 +492,7 @@ unravelServer <- function(id, user_code = NULL) {
             # NOTE: we have to set table output to NULL if it's not a data.frame, otherwise it will
             # still appear below a generic output
             rv$table_output <- NULL
+            # TODO(mark): use generic_output to store plot outputs
             rv$generic_output <- out
           }
         }
@@ -507,72 +508,72 @@ unravelServer <- function(id, user_code = NULL) {
       })
 
       # shiny output of reactable for a data.frame / tibble
-      output$line_table <- reactable::renderReactable({
-        final_data <- data()
-        if (is.data.frame(final_data) && !is.null(final_data) && length(final_data) >= 1) {
-          # if we have a grouped dataframe, to facilitate understanding let's rearrange columns such that
-          # the grouped variables appear to the very left
-          common_args <-
-            list(
-              compact = TRUE,
-              highlight = TRUE,
-              bordered = TRUE,
-              rownames = TRUE,
-              defaultPageSize = 5,
-              showSortable = TRUE,
-              searchable = TRUE
-            )
-          # apply custom styling for column types and any callout columns
-          cols_with_types <- get_common_styles(final_data)
-          all_cols <- get_column_css(final_data, rv$main_callout, cols_with_types)
-          if (is_grouped_df(final_data)) {
-            ngroups_text <- glue::glue("# Groups: [{dplyr::n_groups(final_data)}]")
-            return(
-              do.call(
-                reactable::reactable,
-                append(
-                  common_args,
-                  list(
-                    # rearrange the data such that group variables are at the beginning
-                    data = dplyr::select(.data = final_data, group_vars(final_data), dplyr::everything()) %>% as.data.frame(),
-                    columns = append(
-                      # add in the group number
-                      list(.rownames = colDef(
-                        name = glue::glue("<div class = 'groups'>{ngroups_text}</div>"),
-                        html = TRUE,
-                        maxWidth = 100)
-                      ),
-                      all_cols
-                    ),
-                    theme = reactable::reactableTheme(searchInputStyle = list(width = "100%"))
-                  )
-                )
-              )
-            )
-          } else {
-            rowname_background <- list()
-            if (inherits(final_data, "rowwise_df")) {
-              rowname_background <- list(`background-color` = "lightblue")
-            }
-            return(
-              do.call(
-                reactable::reactable,
-                append(
-                  common_args,
-                  list(
-                    data = final_data %>% as.data.frame(),
-                    columns = append(
-                      list(.rownames = colDef(style = append(list(textAlign = "left"), rowname_background), maxWidth = 80)),
-                      all_cols
-                    ),
-                    theme = reactable::reactableTheme(searchInputStyle = list(width = "100%"))
-                  )
-                )
-              )
-            )
-          }
-        }
-      })
+      # output$line_table <- reactable::renderReactable({
+      #   final_data <- data()
+      #   if (is.data.frame(final_data) && !is.null(final_data) && length(final_data) >= 1) {
+      #     # if we have a grouped dataframe, to facilitate understanding let's rearrange columns such that
+      #     # the grouped variables appear to the very left
+      #     common_args <-
+      #       list(
+      #         compact = TRUE,
+      #         highlight = TRUE,
+      #         bordered = TRUE,
+      #         rownames = TRUE,
+      #         defaultPageSize = 5,
+      #         showSortable = TRUE,
+      #         searchable = TRUE
+      #       )
+      #     # apply custom styling for column types and any callout columns
+      #     cols_with_types <- get_common_styles(final_data)
+      #     all_cols <- get_column_css(final_data, rv$main_callout, cols_with_types)
+      #     if (is_grouped_df(final_data)) {
+      #       ngroups_text <- glue::glue("# Groups: [{dplyr::n_groups(final_data)}]")
+      #       return(
+      #         do.call(
+      #           reactable::reactable,
+      #           append(
+      #             common_args,
+      #             list(
+      #               # rearrange the data such that group variables are at the beginning
+      #               data = dplyr::select(.data = final_data, group_vars(final_data), dplyr::everything()) %>% as.data.frame(),
+      #               columns = append(
+      #                 # add in the group number
+      #                 list(.rownames = colDef(
+      #                   name = glue::glue("<div class = 'groups'>{ngroups_text}</div>"),
+      #                   html = TRUE,
+      #                   maxWidth = 100)
+      #                 ),
+      #                 all_cols
+      #               ),
+      #               theme = reactable::reactableTheme(searchInputStyle = list(width = "100%"))
+      #             )
+      #           )
+      #         )
+      #       )
+      #     } else {
+      #       rowname_background <- list()
+      #       if (inherits(final_data, "rowwise_df")) {
+      #         rowname_background <- list(`background-color` = "lightblue")
+      #       }
+      #       return(
+      #         do.call(
+      #           reactable::reactable,
+      #           append(
+      #             common_args,
+      #             list(
+      #               data = final_data %>% as.data.frame(),
+      #               columns = append(
+      #                 list(.rownames = colDef(style = append(list(textAlign = "left"), rowname_background), maxWidth = 80)),
+      #                 all_cols
+      #               ),
+      #               theme = reactable::reactableTheme(searchInputStyle = list(width = "100%"))
+      #             )
+      #           )
+      #         )
+      #       )
+      #     }
+      #   }
+      # })
 
       # log a user interacting with a table event
       observeEvent(input$table_focus, {
@@ -586,12 +587,12 @@ unravelServer <- function(id, user_code = NULL) {
         log_event(input$data_details_focus)
       })
 
-      output$data_details <- reactable::renderReactable({
-        dat <- data()
-        if (!is.null(dat)) {
-          get_diagnosis(dat)
-        }
-      })
+      # output$data_details <- reactable::renderReactable({
+      #   dat <- data()
+      #   if (!is.null(dat)) {
+      #     get_diagnosis(dat)
+      #   }
+      # })
 
       #### Function help handlers -----
 

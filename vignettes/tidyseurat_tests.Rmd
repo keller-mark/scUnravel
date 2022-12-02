@@ -14,6 +14,7 @@ pbmc_small = UpdateSeuratObject(object = pbmc_small)
 
 all.genes <- rownames(pbmc_small)
 pbmc_small %>%
+  subset(subset = nFeature_RNA > 40 & nFeature_RNA < 250) %>%
   ScaleData(features = all.genes, do.center = FALSE) %>%
   Unravel::unravel()
 ```

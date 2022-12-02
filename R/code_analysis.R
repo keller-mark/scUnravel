@@ -351,8 +351,16 @@ get_output_intermediates <- function(pipeline) {
         change_type <- "none"
         data_changed <- FALSE
         if (i == 1) {
-          output_intermediate["output"] <- list(eval(lines[[i]]))
-          intermediate["output"] <- list(list(1))
+          # Potential Seurat object
+          seurat_obj <- eval(lines[[i]])
+          output_intermediate["output"] <- list(seurat_obj)
+          if(class(seurat_obj)[[1]] == "Seurat") {
+            # Get dimensions of initial Seurat object
+            intermediate["output"] <- list(dim(seurat_obj))
+          } else {
+            # Fallback
+            intermediate["output"] <- list(list(1))
+          }
           data_changed <- TRUE
         } else if (i > 1) {
           # check if the previous line had an error, and skip evaluation if it does
@@ -395,7 +403,15 @@ get_output_intermediates <- function(pipeline) {
           }
           # wrap output as list so it can be stored properly
           output_intermediate["output"] <- list(cur_output)
-          intermediate["output"] <- list(list(1))
+          if(class(cur_output)[[1]] == "Seurat") {
+            # Get dimensions of new Seurat object
+            intermediate["output"] <- list(dim(cur_output))
+            dr_temp <- RunPCA(cur_output)
+            intermediate["dr"] <- DimPlot(dr_temp, reduction = "pca")
+          } else {
+            # Fallback
+            intermediate["output"] <- list(list(1))
+          }
           change_type <- "none"
           #change_type <- get_data_change_type(verb_name, prev_output, cur_output)
           data_changed <- FALSE
