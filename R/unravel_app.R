@@ -240,18 +240,21 @@ unravelUI <- function(id) {
       shiny::htmlOutput(ns("code_explorer"))
     ),
     shiny::tabsetPanel(
-      shiny::tabPanel("Table",
+      # a pane for PCA
+      shiny::tabPanel("PCA",
         shiny::div(
           style = "width: 100%; height: 1200px; margin: 10px;",
           shiny::verbatimTextOutput(ns("generic_output")),
-          reactable::reactableOutput(ns("line_table"))
+          #reactable::reactableOutput(ns("line_table")),
+          shiny::imageOutput(ns("dr_pca"))
         )
       ),
-      # a pane that includes an interactive diagnoistics table for a dataframe
-      shiny::tabPanel("Data Details",
+      # a pane for UMAP
+      shiny::tabPanel("UMAP",
         shiny::div(
           style = "width: 100%; height: 1200px; margin: 10px;",
-          reactable::reactableOutput(ns("data_details"))
+          #reactable::reactableOutput(ns("data_details")),
+          shiny::imageOutput(ns("dr_umap"))
         )
       )
     )
@@ -341,6 +344,7 @@ unravelServer <- function(id, user_code = NULL) {
       rv$outputs <- NULL
       rv$generic_output <- NULL
       rv$table_output <- NULL
+      rv$dr_pca <- NULL
       # used to trigger output (data.frame/lists)
       rv$callouts <- NULL
       rv$main_callout <- NULL
@@ -410,7 +414,7 @@ unravelServer <- function(id, user_code = NULL) {
                 }
                 list(lineid = paste0("line", x$line), summary = x$summary)
               })
-              rv$outputs <- lapply(outputs, function(x) list(lineid = paste0("line", x$line), output = x$output))
+              rv$outputs <- lapply(outputs, function(x) list(lineid = paste0("line", x$line), output = x$output, obj = x$obj))
               # trigger data frame output of the very last line
               rv$current <- length(rv$outputs)
             },
@@ -507,6 +511,24 @@ unravelServer <- function(id, user_code = NULL) {
         }
       })
 
+      dr_pca_data <- reactive({
+        value <- as.numeric(rv$current)
+        out <- NULL
+        if (!is.na(value) && length(rv$outputs) > 0 && value <= length(rv$outputs)) {
+          obj <- rv$outputs[[value]]$obj
+          dr_temp <- Seurat::RunPCA(obj)
+          out <- Seurat::DimPlot(dr_temp, reduction = "pca")
+        }
+        out
+      })
+
+      output$dr_pca <- renderPlot({
+        dr_output <- dr_pca_data()
+        if (!is.null(dr_output)) {
+          return(dr_output)
+        }
+      })
+
       # shiny output of reactable for a data.frame / tibble
       # output$line_table <- reactable::renderReactable({
       #   final_data <- data()
@@ -576,16 +598,16 @@ unravelServer <- function(id, user_code = NULL) {
       # })
 
       # log a user interacting with a table event
-      observeEvent(input$table_focus, {
-        log_event(input$table_focus)
-      })
+      # observeEvent(input$table_focus, {
+      #   log_event(input$table_focus)
+      # })
 
       #### Diagnosis handler -----
 
       # log a user interacting with a table event
-      observeEvent(input$data_details_focus, {
-        log_event(input$data_details_focus)
-      })
+      # observeEvent(input$data_details_focus, {
+      #   log_event(input$data_details_focus)
+      # })
 
       # output$data_details <- reactable::renderReactable({
       #   dat <- data()

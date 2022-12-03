@@ -342,7 +342,7 @@ get_output_intermediates <- function(pipeline) {
     # append a \t and a pipe character %>% or ggplot + unless it's the last line
     deparsed <- ifelse(i != 1, style_long_line(verb), deparsed)
     # setup the intermediate list with initial information
-    intermediate <- list(line = i, code = deparsed, change = get_change_type(verb_name))
+    intermediate <- list(line = i, code = deparsed, change = get_change_type(verb_name), dr_pca = NULL, dr_umap = NULL)
     output_intermediate <- list(output = NULL)
     err <- NULL
     tryCatch({
@@ -357,6 +357,7 @@ get_output_intermediates <- function(pipeline) {
           if(class(seurat_obj)[[1]] == "Seurat") {
             # Get dimensions of initial Seurat object
             intermediate["output"] <- list(dim(seurat_obj))
+            intermediate["obj"] <- list(seurat_obj)
           } else {
             # Fallback
             intermediate["output"] <- list(list(1))
@@ -406,8 +407,7 @@ get_output_intermediates <- function(pipeline) {
           if(class(cur_output)[[1]] == "Seurat") {
             # Get dimensions of new Seurat object
             intermediate["output"] <- list(dim(cur_output))
-            dr_temp <- RunPCA(cur_output)
-            intermediate["dr"] <- DimPlot(dr_temp, reduction = "pca")
+            intermediate["obj"] <- list(cur_output)
           } else {
             # Fallback
             intermediate["output"] <- list(list(1))

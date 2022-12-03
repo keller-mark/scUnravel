@@ -463,7 +463,7 @@ $(document).on("shiny:sessioninitialized", function(event) {
   */
 
   // listen to any click and print target
-  document.getElementById('unravel-line_table').addEventListener("click", function(e) {
+  /*document.getElementById('unravel-line_table').addEventListener("click", function(e) {
     console.log("Click event on table!")
     Shiny.setInputValue("unravel-table_focus", "clicking on table", {priority: "event"});
   })
@@ -477,7 +477,7 @@ $(document).on("shiny:sessioninitialized", function(event) {
   document.getElementById('unravel-data_details').addEventListener("mouseenter", function(e) {
     console.log("Mouse hover event on data details!")
     Shiny.setInputValue("unravel-data_details_focus", "focusing on data details", {priority: "event"});
-  })
+  })*/
 
   Shiny.addCustomMessageHandler('need_explorer', function(message) {
     console.log("JS is signaling R " + message);
