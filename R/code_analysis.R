@@ -433,8 +433,12 @@ get_output_intermediates <- function(pipeline) {
         intermediate["col"] <- dim(out)[[2]]
         # if the data was not a dataframe, grab the length (for now lists/vectors)
         # Note: we will need a different way to support complex types like ggplot2 objects
-        if (is.null(intermediate$row) && is.vector(out)) {
+        if (!is.null(intermediate$row) && is.vector(out)) {
           intermediate["row"] <- length(out)
+        }
+        if (!is.null(intermediate$obj)) {
+          intermediate["row"] <- out[[1]]
+          intermediate["col"] <- out[[2]]
         }
 
         # store the function summary
