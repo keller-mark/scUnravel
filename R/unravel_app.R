@@ -511,6 +511,7 @@ unravelServer <- function(id, user_code = NULL) {
         }
       })
 
+      # Compute PCA
       dr_pca_data <- reactive({
         value <- as.numeric(rv$current)
         out <- NULL
@@ -524,6 +525,25 @@ unravelServer <- function(id, user_code = NULL) {
 
       output$dr_pca <- renderPlot({
         dr_output <- dr_pca_data()
+        if (!is.null(dr_output)) {
+          return(dr_output)
+        }
+      })
+
+      # Compute UMAP
+      dr_umap_data <- reactive({
+        value <- as.numeric(rv$current)
+        out <- NULL
+        if (!is.na(value) && length(rv$outputs) > 0 && value <= length(rv$outputs)) {
+          obj <- rv$outputs[[value]]$obj
+          dr_temp <- Seurat::RunUMAP(obj, dims = 1:10)
+          out <- Seurat::DimPlot(dr_temp, reduction = "umap")
+        }
+        out
+      })
+
+      output$dr_umap <- renderPlot({
+        dr_output <- dr_umap_data()
         if (!is.null(dr_output)) {
           return(dr_output)
         }

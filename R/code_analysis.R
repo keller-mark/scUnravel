@@ -397,7 +397,7 @@ get_output_intermediates <- function(pipeline) {
             # construct a call for the function such that we use the previous output as the input, and rest of the args
             log_info(paste("call_expr", "pre"))
             call_expr <- rlang::call2(verb_name, !!!append(list(prev_output), rlang::call_args(verb)))
-            log_info(paste("call_expr", call_expr))
+            #log_info(paste("call_expr", call_expr))
             # evaluate the final function call expression within the new environment that holds the "pronoun"
             cur_output <- eval(call_expr, envir = e)
             #log_info(paste("cur_output", cur_output))
