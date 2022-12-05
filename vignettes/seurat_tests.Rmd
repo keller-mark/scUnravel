@@ -5,18 +5,28 @@ output: rmarkdown::html_vignette
 
 
 ```r
-library(Unravel)
+devtools::load_all()
 library(Seurat)
-library(SeuratData)
+library(dplyr)
 
-SeuratData::InstallData("pbmc3k")
-data("pbmc3k.final")
-force(pbmc3k.final)
+# Download example dataset
+#url <- "https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz"
+save_dir <- file.path("data", "seurat")
+#dir.create(save_dir)
+#download.file(url, destfile = file.path(save_dir, "filtered_gene_bc_matrices.tar.gz"))
+#untar(file.path(save_dir, "filtered_gene_bc_matrices.tar.gz"), exdir = save_dir)
 
-pbmc3k.final = UpdateSeuratObject(object = pbmc3k.final)
+# Load example dataset
+pbmc.data <- Read10X(data.dir = file.path(save_dir, "filtered_gene_bc_matrices", "hg19"))
 
-all.genes <- rownames(pbmc3k.final)
-pbmc3k.final %>%
-  ScaleData(features = all.genes, do.center = FALSE) %>%
+# Process example dataset (run PCA and cluster)
+pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3, min.features = 200)
+
+pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
+
+pbmc[1:2000, 1:800] %>%
+  subset(subset = nFeature_RNA > 50 & nFeature_RNA < 200) %>%
+  FindVariableFeatures(nfeatures = 600) %>%
+  SCTransform() %>%
   Unravel::unravel()
 ```

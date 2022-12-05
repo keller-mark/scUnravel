@@ -4,6 +4,7 @@
 .DS_Store
 study_logs/
 logs/
+data/
 
 # Session Data files
 .RData

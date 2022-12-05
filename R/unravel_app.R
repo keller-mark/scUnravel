@@ -240,10 +240,10 @@ unravelUI <- function(id) {
       shiny::htmlOutput(ns("code_explorer"))
     ),
     # shiny::fixedRow(
-    #   column(width = 2,
+    #   shiny::column(width = 2,
     #     shiny::div()
     #   ),
-    #   column(width = 10,
+    #   shiny::column(width = 10,
     #     shiny::uiOutput(ns("call_args"))
     #   )
     # ),
@@ -252,22 +252,24 @@ unravelUI <- function(id) {
       shiny::tabPanel("Dimensionality reductions",
         shiny::fixedRow(
           #reactable::reactableOutput(ns("line_table")),
-          column(width = 4,
+          shiny::column(width = 4,
             shiny::imageOutput(ns("dr_pca"))
           ),
-          column(width = 4,
+          shiny::column(width = 4,
             shiny::imageOutput(ns("dr_umap"))
           ),
-          column(width = 4,
+          shiny::column(width = 4,
             shiny::imageOutput(ns("dr_tsne"))
           )
         )
       ),
       # a pane for UMAP
       shiny::tabPanel("QC",
-        shiny::div(
-          style = "width: 100%; margin: 10px;",
-          #reactable::reactableOutput(ns("data_details"))
+        shiny::fixedRow(
+          #reactable::reactableOutput(ns("data_details")),
+          shiny::column(width = 12,
+            shiny::imageOutput(ns("qc_vln"))
+          )
         )
       )
     )
@@ -556,6 +558,27 @@ unravelServer <- function(id, user_code = NULL) {
         }
       })
 
+      all_qc_data <- reactive({
+        all_outputs <- rv$outputs
+        out <- list()
+        if (length(rv$outputs) > 0) {
+          for(output_i in rv$outputs) {
+            dr_temp <- output_i$obj
+            if(!is.null(dr_temp)) {
+              meta_cols <- colnames(dr_temp@meta.data)
+              possible_cols <- c("nFeature_RNA", "nCount_RNA", "percent.mt")
+              cols_intersection <- possible_cols[possible_cols %in% meta_cols]
+
+              qc_plot <- Seurat::VlnPlot(dr_temp, features = cols_intersection, ncol = length(cols_intersection))
+              out <- append(out, list(list(qc = qc_plot)))
+            } else {
+              out <- append(out, list(NULL))
+            }
+          }
+        }
+        out
+      })
+
       # Compute all dimensionality reductions
       all_dr_data <- reactive({
         all_outputs <- rv$outputs
@@ -563,13 +586,25 @@ unravelServer <- function(id, user_code = NULL) {
         if (length(rv$outputs) > 0) {
           for(output_i in rv$outputs) {
             dr_temp <- output_i$obj
-            dr_temp <- Seurat::RunPCA(dr_temp)
-            dr_temp <- Seurat::RunUMAP(dr_temp, dims = 1:10)
-            dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, perplexity = 2, check_duplicates = FALSE)
-            pca_plot <- Seurat::DimPlot(dr_temp, reduction = "pca")
-            umap_plot <- Seurat::DimPlot(dr_temp, reduction = "umap")
-            tsne_plot <- Seurat::DimPlot(dr_temp, reduction = "tsne")
-            out <- append(out, list(list(pca = pca_plot, umap = umap_plot, tsne = tsne_plot)))
+            if(!is.null(dr_temp)) {
+              if(length(dr_temp@assays[[Seurat::DefaultAssay(dr_temp)]]@var.features) == 0) {
+                all_genes <- rownames(dr_temp)
+              } else {
+                all_genes <- NULL
+              }
+              if(length(dr_temp@assays[[Seurat::DefaultAssay(dr_temp)]]@scale.data) == 0) {
+                dr_temp <- Seurat::ScaleData(dr_temp)
+              }
+              dr_temp <- Seurat::RunPCA(dr_temp, features = all_genes)
+              dr_temp <- Seurat::RunUMAP(dr_temp, dims = 1:10)
+              dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, check_duplicates = FALSE)
+              pca_plot <- Seurat::DimPlot(dr_temp, reduction = "pca")
+              umap_plot <- Seurat::DimPlot(dr_temp, reduction = "umap")
+              tsne_plot <- Seurat::DimPlot(dr_temp, reduction = "tsne")
+              out <- append(out, list(list(pca = pca_plot, umap = umap_plot, tsne = tsne_plot)))
+            } else {
+              out <- append(out, list(NULL))
+            }
           }
         }
         out
@@ -582,6 +617,16 @@ unravelServer <- function(id, user_code = NULL) {
         out <- NULL
         if (!is.na(value) && length(dr_data) > 0 && value <= length(dr_data)) {
           out <- dr_data[[value]]
+        }
+        out
+      })
+
+      curr_qc_data <- reactive({
+        value <- as.numeric(rv$current)
+        qc_data <- all_qc_data()
+        out <- NULL
+        if (!is.na(value) && length(qc_data) > 0 && value <= length(qc_data)) {
+          out <- qc_data[[value]]
         }
         out
       })
@@ -603,6 +648,13 @@ unravelServer <- function(id, user_code = NULL) {
         dr_output <- curr_dr_data()
         if (!is.null(dr_output) && !is.null(dr_output$tsne)) {
           return(dr_output$tsne)
+        }
+      })
+
+      output$qc_vln <- renderPlot({
+        qc_output <- curr_qc_data()
+        if (!is.null(qc_output) && !is.null(qc_output$qc)) {
+          return(qc_output$qc)
         }
       })
 
