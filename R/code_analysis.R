@@ -342,7 +342,7 @@ get_output_intermediates <- function(pipeline) {
     # append a \t and a pipe character %>% or ggplot + unless it's the last line
     deparsed <- ifelse(i != 1, style_long_line(verb), deparsed)
     # setup the intermediate list with initial information
-    intermediate <- list(line = i, code = deparsed, change = get_change_type(verb_name), dr_pca = NULL, dr_umap = NULL)
+    intermediate <- list(line = i, code = deparsed, change = get_change_type(verb_name), obj = NULL, args = NULL)
     output_intermediate <- list(output = NULL)
     err <- NULL
     tryCatch({
@@ -380,7 +380,7 @@ get_output_intermediates <- function(pipeline) {
           log_info(paste("verb_name", verb_name))
           log_info(paste("verb", verb))
           log_info(paste("deparsed", deparsed))
-          log_info(paste("prev_output", class(prev_output))) 
+          #log_info(paste("prev_output", class(prev_output))) 
           #log_info(paste("prev_output_real", output_results[[i - 1]]["output"][[1]]))
           # for the current line, take the previous output and feed it as the `.data`, and the rest of the args
           # NOTE: because we are not evaluating a `lhs %>% rhs()`, and only `rhs()` we miss out on the '.' pronoun
@@ -394,13 +394,11 @@ get_output_intermediates <- function(pipeline) {
             call_expr_text <- paste0(results[[i - 1]]$code, deparsed)
             cur_output <- eval(parse(text = call_expr_text), envir = e)
           } else {
+            args <- rlang::call_args(verb)
             # construct a call for the function such that we use the previous output as the input, and rest of the args
-            log_info(paste("call_expr", "pre"))
-            call_expr <- rlang::call2(verb_name, !!!append(list(prev_output), rlang::call_args(verb)))
-            #log_info(paste("call_expr", call_expr))
+            call_expr <- rlang::call2(verb_name, !!!append(list(prev_output), args))
             # evaluate the final function call expression within the new environment that holds the "pronoun"
             cur_output <- eval(call_expr, envir = e)
-            #log_info(paste("cur_output", cur_output))
           }
           # wrap output as list so it can be stored properly
           output_intermediate["output"] <- list(cur_output)
@@ -408,6 +406,7 @@ get_output_intermediates <- function(pipeline) {
             # Get dimensions of new Seurat object
             intermediate["output"] <- list(dim(cur_output))
             intermediate["obj"] <- list(cur_output)
+            intermediate["args"] <- list(args)
           } else {
             # Fallback
             intermediate["output"] <- list(list(1))

@@ -241,20 +241,30 @@ unravelUI <- function(id) {
     ),
     shiny::tabsetPanel(
       # a pane for PCA
-      shiny::tabPanel("PCA",
-        shiny::div(
-          style = "width: 100%; height: 1200px; margin: 10px;",
-          shiny::verbatimTextOutput(ns("generic_output")),
+      shiny::tabPanel("Dimensionality reductions",
+        shiny::fixedRow(
+          column(width = 12,
+            shiny::verbatimTextOutput(ns("call_args"))
+          )
+        ),
+        shiny::fixedRow(
           #reactable::reactableOutput(ns("line_table")),
-          shiny::imageOutput(ns("dr_pca"))
+          column(width = 4,
+            shiny::imageOutput(ns("dr_pca"))
+          ),
+          column(width = 4,
+            shiny::imageOutput(ns("dr_umap"))
+          ),
+          column(width = 4,
+            shiny::imageOutput(ns("dr_tsne"))
+          )
         )
       ),
       # a pane for UMAP
-      shiny::tabPanel("UMAP",
+      shiny::tabPanel("QC",
         shiny::div(
-          style = "width: 100%; height: 1200px; margin: 10px;",
-          #reactable::reactableOutput(ns("data_details")),
-          shiny::imageOutput(ns("dr_umap"))
+          style = "width: 100%; margin: 10px;",
+          #reactable::reactableOutput(ns("data_details"))
         )
       )
     )
@@ -275,39 +285,39 @@ code_explorer_ui <- function(code_info, id) {
       # a hack that makes sure the code explorer loads before the tabs output
       shiny::tags$script("document.getElementById('code_explorer_container').style.height = '100%';")
     ),
-    shiny::br(),
-    # TODO if we want we could also add prompts to the data change scheme color
-    shiny::div(
-      class = "d-flex justify-content-center",
-      shiny::div(
-        class = "d-flex align-self-center", style = "margin-left: 8em;",
-        # no change
-        div(class = glue::glue("d-flex none-square-key justify-content-center"), style = "cursor: default;"),
-        div(
-          class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
-          style = "padding-left: 1em; font-size: 0.8em; width: 80px;", "No change"
-        ),
-        # internal
-        div(class = glue::glue("d-flex internal-square-key justify-content-center"), style = "cursor: default;"),
-        div(
-          class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
-          style = "padding-left: 1em; font-size: 0.8em; width: 100px;", "Internal change"
-        ),
-        # visible
-        div(class = glue::glue("d-flex visible-square-key justify-content-center"), style = "cursor: default;"),
-        div(
-          class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
-          style = "padding-left: 1em; font-size: 0.8em; width: 100px;", "Visible change"
-        ),
-        # error
-        div(class = glue::glue("d-flex error-square-key justify-content-left"), style = "cursor: default;"),
-        div(
-          class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
-          style = "padding-left: 0.5em; font-size: 0.8em; width: 100px;", "Error"
-        ),
-      )
-    ),
     shiny::br()
+    # # TODO if we want we could also add prompts to the data change scheme color
+    # shiny::div(
+    #   class = "d-flex justify-content-center",
+    #   shiny::div(
+    #     class = "d-flex align-self-center", style = "margin-left: 8em;",
+    #     # no change
+    #     div(class = glue::glue("d-flex none-square-key justify-content-center"), style = "cursor: default;"),
+    #     div(
+    #       class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
+    #       style = "padding-left: 1em; font-size: 0.8em; width: 80px;", "No change"
+    #     ),
+    #     # internal
+    #     div(class = glue::glue("d-flex internal-square-key justify-content-center"), style = "cursor: default;"),
+    #     div(
+    #       class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
+    #       style = "padding-left: 1em; font-size: 0.8em; width: 100px;", "Internal change"
+    #     ),
+    #     # visible
+    #     div(class = glue::glue("d-flex visible-square-key justify-content-center"), style = "cursor: default;"),
+    #     div(
+    #       class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
+    #       style = "padding-left: 1em; font-size: 0.8em; width: 100px;", "Visible change"
+    #     ),
+    #     # error
+    #     div(class = glue::glue("d-flex error-square-key justify-content-left"), style = "cursor: default;"),
+    #     div(
+    #       class = glue::glue("d-flex empty-square justify-content-left align-self-center"),
+    #       style = "padding-left: 0.5em; font-size: 0.8em; width: 100px;", "Error"
+    #     ),
+    #   )
+    # ),
+    # shiny::br()
   )
 }
 
@@ -414,7 +424,7 @@ unravelServer <- function(id, user_code = NULL) {
                 }
                 list(lineid = paste0("line", x$line), summary = x$summary)
               })
-              rv$outputs <- lapply(outputs, function(x) list(lineid = paste0("line", x$line), output = x$output, obj = x$obj))
+              rv$outputs <- lapply(outputs, function(x) list(lineid = paste0("line", x$line), output = x$output, obj = x$obj, args = x$args))
               # trigger data frame output of the very last line
               rv$current <- length(rv$outputs)
             },
@@ -503,6 +513,22 @@ unravelServer <- function(id, user_code = NULL) {
         out
       })
 
+      call_args_data <- reactive({
+        value <- as.numeric(rv$current)
+        out <- NULL
+        if (!is.na(value) && length(rv$outputs) > 0 && value <= length(rv$outputs)) {
+          out <- rv$outputs[[value]]$args
+        }
+        out
+      })
+
+      output$call_args <- renderPrint({
+        call_args <- call_args_data()
+        if (!is.null(call_args)) {
+          return(call_args)
+        }
+      })
+
       # this is the output for non-dataframe objects like ggplot objects, or vectors and lists
       output$generic_output <- renderPrint({
         generic_output <- data()
@@ -511,41 +537,53 @@ unravelServer <- function(id, user_code = NULL) {
         }
       })
 
-      # Compute PCA
-      dr_pca_data <- reactive({
+      # Compute all dimensionality reductions
+      all_dr_data <- reactive({
+        all_outputs <- rv$outputs
+        out <- list()
+        if (length(rv$outputs) > 0) {
+          for(output_i in rv$outputs) {
+            dr_temp <- output_i$obj
+            dr_temp <- Seurat::RunPCA(dr_temp)
+            dr_temp <- Seurat::RunUMAP(dr_temp, dims = 1:10)
+            dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, perplexity = 2, check_duplicates = FALSE)
+            pca_plot <- Seurat::DimPlot(dr_temp, reduction = "pca")
+            umap_plot <- Seurat::DimPlot(dr_temp, reduction = "umap")
+            tsne_plot <- Seurat::DimPlot(dr_temp, reduction = "tsne")
+            out <- append(out, list(list(pca = pca_plot, umap = umap_plot, tsne = tsne_plot)))
+          }
+        }
+        out
+      })
+
+      # Get current DR images
+      curr_dr_data <- reactive({
         value <- as.numeric(rv$current)
+        dr_data <- all_dr_data()
         out <- NULL
-        if (!is.na(value) && length(rv$outputs) > 0 && value <= length(rv$outputs)) {
-          obj <- rv$outputs[[value]]$obj
-          dr_temp <- Seurat::RunPCA(obj)
-          out <- Seurat::DimPlot(dr_temp, reduction = "pca")
+        if (!is.na(value) && length(dr_data) > 0 && value <= length(dr_data)) {
+          out <- dr_data[[value]]
         }
         out
       })
 
       output$dr_pca <- renderPlot({
-        dr_output <- dr_pca_data()
-        if (!is.null(dr_output)) {
-          return(dr_output)
+        dr_output <- curr_dr_data()
+        if (!is.null(dr_output) && !is.null(dr_output$pca)) {
+          return(dr_output$pca)
         }
-      })
-
-      # Compute UMAP
-      dr_umap_data <- reactive({
-        value <- as.numeric(rv$current)
-        out <- NULL
-        if (!is.na(value) && length(rv$outputs) > 0 && value <= length(rv$outputs)) {
-          obj <- rv$outputs[[value]]$obj
-          dr_temp <- Seurat::RunUMAP(obj, dims = 1:10)
-          out <- Seurat::DimPlot(dr_temp, reduction = "umap")
-        }
-        out
       })
 
       output$dr_umap <- renderPlot({
-        dr_output <- dr_umap_data()
-        if (!is.null(dr_output)) {
-          return(dr_output)
+        dr_output <- curr_dr_data()
+        if (!is.null(dr_output) && !is.null(dr_output$umap)) {
+          return(dr_output$umap)
+        }
+      })
+      output$dr_tsne <- renderPlot({
+        dr_output <- curr_dr_data()
+        if (!is.null(dr_output) && !is.null(dr_output$tsne)) {
+          return(dr_output$tsne)
         }
       })
 

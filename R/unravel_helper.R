@@ -48,6 +48,7 @@ generate_code_info_outputs <- function(order, rv) {
     new_code_info[[i]]
   })
   new_code_source <- paste0(lapply(new_code_info, function(x) x$code), collapse = "\n")
+  log_code(new_code_source)
   quoted <- rlang::parse_expr(new_code_source)
   # message("producing new code info")
 
