@@ -239,14 +239,17 @@ unravelUI <- function(id) {
       style = "height: 1000px;",
       shiny::htmlOutput(ns("code_explorer"))
     ),
+    # shiny::fixedRow(
+    #   column(width = 2,
+    #     shiny::div()
+    #   ),
+    #   column(width = 10,
+    #     shiny::uiOutput(ns("call_args"))
+    #   )
+    # ),
     shiny::tabsetPanel(
       # a pane for PCA
       shiny::tabPanel("Dimensionality reductions",
-        shiny::fixedRow(
-          column(width = 12,
-            shiny::verbatimTextOutput(ns("call_args"))
-          )
-        ),
         shiny::fixedRow(
           #reactable::reactableOutput(ns("line_table")),
           column(width = 4,
@@ -522,12 +525,28 @@ unravelServer <- function(id, user_code = NULL) {
         out
       })
 
-      output$call_args <- renderPrint({
-        call_args <- call_args_data()
-        if (!is.null(call_args)) {
-          return(call_args)
-        }
-      })
+      # Render interface to toggle arguments.
+      # output$call_args <- renderPrint({
+      #   call_args <- call_args_data()
+      #   if (!is.null(call_args)) {
+      #     return(call_args)
+      #   }
+      # })
+
+      # output$call_args <- renderUI({
+      #   call_args <- call_args_data()
+      #   if (!is.null(call_args)) {
+      #     ataglist <- list()
+      #     for(arg_name in names(call_args)) {
+      #       arg_val <- call_args[[arg_name]]
+      #       if(is.logical(arg_val)) {
+      #         ataglist <- append(ataglist, list(shiny::p(arg_name)))
+      #       }
+      #     }
+      #     class(ataglist) <- c("shiny.tag.list", "list")
+      #     return(ataglist)
+      #   }
+      # })
 
       # this is the output for non-dataframe objects like ggplot objects, or vectors and lists
       output$generic_output <- renderPrint({
