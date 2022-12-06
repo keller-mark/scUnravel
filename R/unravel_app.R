@@ -597,7 +597,12 @@ unravelServer <- function(id, user_code = NULL) {
               }
               dr_temp <- Seurat::RunPCA(dr_temp, features = all_genes)
               dr_temp <- Seurat::RunUMAP(dr_temp, dims = 1:10)
-              dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, perplexity = 2, check_duplicates = FALSE)
+              if(nrow(dr_temp) < 1000) {
+                tsne_perplexity <- 2
+              } else {
+                tsne_perplexity <- 30
+              }
+              dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, perplexity = tsne_perplexity, check_duplicates = FALSE)
               pca_plot <- Seurat::DimPlot(dr_temp, reduction = "pca")
               umap_plot <- Seurat::DimPlot(dr_temp, reduction = "umap")
               tsne_plot <- Seurat::DimPlot(dr_temp, reduction = "tsne")
