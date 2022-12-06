@@ -400,6 +400,7 @@ get_output_intermediates <- function(pipeline) {
             call_expr <- rlang::call2(verb_name, !!!append(list(prev_output), args))
             # evaluate the final function call expression within the new environment that holds the "pronoun"
             cur_output <- eval(call_expr, envir = e)
+            # Clean up
             log_info(paste("post call_expr"))
           }
           # wrap output as list so it can be stored properly

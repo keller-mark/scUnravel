@@ -181,6 +181,20 @@ store_log <- function(..., storage = "sqlite",
       paste0(c(variables), collapse = "|"), "\n",
       file = file.path(dir_name, logfile_name), sep = "", append = TRUE
     )
+
+    if(identical(variables[['type']], "CODE")) {
+      multiverse_filename <- getOption("unravel.multiversefile")
+      multiverse_timestamp <- variables[["timestamp"]]
+      multiverse_message <- variables[["message"]]
+      cat(
+        paste0("# Executed at ", multiverse_timestamp),
+        "\n",
+        multiverse_message,
+        "\n",
+        file = file.path(dir_name, multiverse_filename), sep = "", append = TRUE
+      )
+    }
+
   } else if (identical(storage, "sqlite")) {
     db_path <- file.path(dir_name, getOption("db.file"))
     if (!file.exists(db_path)) {

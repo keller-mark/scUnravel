@@ -593,11 +593,11 @@ unravelServer <- function(id, user_code = NULL) {
                 all_genes <- NULL
               }
               if(length(dr_temp@assays[[Seurat::DefaultAssay(dr_temp)]]@scale.data) == 0) {
-                dr_temp <- Seurat::ScaleData(dr_temp)
+                dr_temp <- Seurat::ScaleData(dr_temp, do.scale = FALSE, do.center = FALSE)
               }
               dr_temp <- Seurat::RunPCA(dr_temp, features = all_genes)
               dr_temp <- Seurat::RunUMAP(dr_temp, dims = 1:10)
-              dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, check_duplicates = FALSE)
+              dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, perplexity = 2, check_duplicates = FALSE)
               pca_plot <- Seurat::DimPlot(dr_temp, reduction = "pca")
               umap_plot <- Seurat::DimPlot(dr_temp, reduction = "umap")
               tsne_plot <- Seurat::DimPlot(dr_temp, reduction = "tsne")

@@ -9,6 +9,7 @@
     "db.file" = "logs.sqlite",
     "unravel.logdir" = "/Users/mkeller/courses/COMPSCI279R/unravel/Unravel/logs/",
     "unravel.logfile" = "logs.txt",
+    "unravel.multiversefile" = "multiverse.R",
     "unravel.logging" = TRUE
   )
 }
