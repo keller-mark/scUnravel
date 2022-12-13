@@ -98,3 +98,7 @@ unravel_addin <- function() {
   invoke_unravel(code = selected)
 }
 
+history <- function() {
+  rstudioapi::navigateToFile("/Users/mkeller/courses/COMPSCI279R/unravel/Unravel/logs/multiverse.R")
+}
+

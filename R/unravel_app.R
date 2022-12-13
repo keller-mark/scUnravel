@@ -603,9 +603,9 @@ unravelServer <- function(id, user_code = NULL) {
                 tsne_perplexity <- 30
               }
               dr_temp <- Seurat::RunTSNE(dr_temp, dims = 1:10, perplexity = tsne_perplexity, check_duplicates = FALSE)
-              pca_plot <- Seurat::DimPlot(dr_temp, reduction = "pca")
-              umap_plot <- Seurat::DimPlot(dr_temp, reduction = "umap")
-              tsne_plot <- Seurat::DimPlot(dr_temp, reduction = "tsne")
+              pca_plot <- (Seurat::DimPlot(dr_temp, reduction = "pca") + Seurat::NoLegend())
+              umap_plot <- (Seurat::DimPlot(dr_temp, reduction = "umap") + Seurat::NoLegend())
+              tsne_plot <- (Seurat::DimPlot(dr_temp, reduction = "tsne") + Seurat::NoLegend())
               out <- append(out, list(list(pca = pca_plot, umap = umap_plot, tsne = tsne_plot)))
             } else {
               out <- append(out, list(NULL))

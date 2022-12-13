@@ -1,10 +1,11 @@
 library(Seurat)
-library(dplyr)
+library(magrittr)
 source(file.path(getwd(), "vignettes", "helpers.R"))
 
-# Load example dataset
+# Step 1. Load example dataset
 pbmc <- load_data()
-# Run the demo
+# Step 2. Analyze the data
+devtools::load_all()
 pbmc %>%
   subset(subset = percent.mt < 5) %>%
   NormalizeData(scale.factor = 10000) %>%
