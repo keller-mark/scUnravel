@@ -25,3 +25,22 @@ load_simulated_data_b <- function() {
   sim.seurat <- Seurat::ScaleData(sim.seurat, do.scale = FALSE, do.center = FALSE)
   return(sim.seurat[1:1100, 1:100])
 }
+load_simulated_data_c <- function() {
+  set.seed(33)
+  sim.groups <- splatter::splatSimulate(group.prob = c(0.4, 0.3, 0.3), method = "groups", verbose = FALSE)
+  sim.groups <- scater::logNormCounts(sim.groups)
+  sim.seurat <- Seurat::as.Seurat(sim.groups, counts = "counts", data = "logcounts")
+  sim.seurat <- SeuratObject::RenameAssays(sim.seurat, originalexp = "RNA")
+  sim.seurat <- Seurat::ScaleData(sim.seurat, do.scale = FALSE, do.center = FALSE)
+  return(sim.seurat[1:1100, 1:100])
+}
+
+load_simulated_data_d <- function() {
+  set.seed(44)
+  sim.groups <- splatter::splatSimulate(group.prob = c(0.3, 0.3, 0.4), method = "groups", verbose = FALSE)
+  sim.groups <- scater::logNormCounts(sim.groups)
+  sim.seurat <- Seurat::as.Seurat(sim.groups, counts = "counts", data = "logcounts")
+  sim.seurat <- SeuratObject::RenameAssays(sim.seurat, originalexp = "RNA")
+  sim.seurat <- Seurat::ScaleData(sim.seurat, do.scale = FALSE, do.center = FALSE)
+  return(sim.seurat[1:1100, 1:100])
+}

@@ -3,12 +3,10 @@ library(magrittr)
 source(file.path(getwd(), "vignettes", "helpers.R"))
 
 # Step 1. Load example dataset
-pbmc <- load_data()
+sim <- load_simulated_data_b()
 # Step 2. Analyze the data
-devtools::load_all()
-pbmc %>%
-  subset(subset = percent.mt < 5) %>%
-  NormalizeData(scale.factor = 10000) %>%
-  FindVariableFeatures(nfeatures = 300) %>%
+sim %>%
+  FindVariableFeatures(nfeatures = 50) %>%
+  NormalizeData(scale.factor = 1000) %>%
   SCTransform() %>%
   Unravel::unravel()
